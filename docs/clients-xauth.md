@@ -1,6 +1,6 @@
-# Configure IPsec/XAuth VPN Clients
+[English](clients-xauth.md) | [中文](clients-xauth-zh.md)
 
-*Read this in other languages: [English](clients-xauth.md), [中文](clients-xauth-zh.md).*
+# Configure IPsec/XAuth VPN Clients
 
 **Note:** You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode.
 
@@ -16,9 +16,17 @@ IPsec/XAuth mode is also called "Cisco IPsec". This mode is generally **faster t
   * [iOS (iPhone/iPad)](#ios)
   * [Linux](#linux)
 
+<details>
+<summary>
+Like this project? You can show your support or appreciation.
+</summary>
+
+<a href="https://ko-fi.com/hwdsl2" target="_blank"><img height="36" width="187" src="images/kofi2.png" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a> &nbsp;<a href="https://coindrop.to/hwdsl2" target="_blank"><img src="images/embed-button.png" height="36" width="145" border="0" alt="Coindrop.to me" /></a>
+</details>
+
 ## Windows
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode. No additional software is required.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode. No additional software is required.
 
 1. Download and install the free [Shrew Soft VPN client](https://www.shrew.net/download/vpn). When prompted during install, select **Standard Edition**.   
    **Note:** This VPN client does NOT support Windows 10/11.
@@ -42,7 +50,7 @@ If you get an error when trying to connect, see [Troubleshooting](clients.md#tro
 
 ## OS X
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode.
 
 1. Open System Preferences and go to the Network section.
 1. Click the **+** button in the lower-left corner of the window.
@@ -66,7 +74,7 @@ If you get an error when trying to connect, see [Troubleshooting](clients.md#tro
 
 ## Android
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode. Android 12 only supports [IKEv2](ikev2-howto.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode. Android 12 only supports [IKEv2](ikev2-howto.md) mode.
 
 1. Launch the **Settings** application.
 1. Tap "Network & internet". Or, if using Android 7 or earlier, tap **More...** in the **Wireless & networks** section.
@@ -90,7 +98,7 @@ If you get an error when trying to connect, see [Troubleshooting](clients.md#tro
 
 ## iOS
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/L2TP](clients.md) mode.
 
 1. Go to Settings -> General -> VPN.
 1. Tap **Add VPN Configuration...**.
@@ -110,7 +118,7 @@ If you get an error when trying to connect, see [Troubleshooting](clients.md#tro
 
 ## Linux
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
+> You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
 
 ### Fedora and CentOS
 

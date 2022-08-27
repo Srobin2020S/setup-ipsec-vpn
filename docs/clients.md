@@ -1,6 +1,6 @@
-# Configure IPsec/L2TP VPN Clients
+[English](clients.md) | [中文](clients-zh.md)
 
-*Read this in other languages: [English](clients.md), [中文](clients-zh.md).*
+# Configure IPsec/L2TP VPN Clients
 
 **Note:** You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode.
 
@@ -16,9 +16,17 @@ After [setting up your own VPN server](https://github.com/hwdsl2/setup-ipsec-vpn
   * [Linux](#linux)
 * [Troubleshooting](#troubleshooting)
 
+<details>
+<summary>
+Like this project? You can show your support or appreciation.
+</summary>
+
+<a href="https://ko-fi.com/hwdsl2" target="_blank"><img height="36" width="187" src="images/kofi2.png" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a> &nbsp;<a href="https://coindrop.to/hwdsl2" target="_blank"><img src="images/embed-button.png" height="36" width="145" border="0" alt="Coindrop.to me" /></a>
+</details>
+
 ## Windows
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
+> You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
 
 ### Windows 11
 
@@ -71,7 +79,9 @@ Alternatively, instead of following the steps above, you may create the VPN conn
 # Disable persistent command history
 Set-PSReadlineOption –HistorySaveStyle SaveNothing
 # Create VPN connection
-Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress 'Your VPN Server IP' -L2tpPsk 'Your VPN IPsec PSK' -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod Chap,MSChapv2 -Force -RememberCredential -PassThru
+Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress 'Your VPN Server IP' ^
+  -L2tpPsk 'Your VPN IPsec PSK' -TunnelType L2tp -EncryptionLevel Required ^
+  -AuthenticationMethod Chap,MSChapv2 -Force -RememberCredential -PassThru
 # Ignore the data encryption warning (data is encrypted in the IPsec tunnel)
 ```
 
@@ -109,7 +119,7 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
 
 ## OS X
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode.
 
 1. Open System Preferences and go to the Network section.
 1. Click the **+** button in the lower-left corner of the window.
@@ -134,7 +144,7 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
 
 ## Android
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode. Android 12 only supports [IKEv2](ikev2-howto.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode. Android 12 only supports [IKEv2](ikev2-howto.md) mode.
 
 1. Launch the **Settings** application.
 1. Tap "Network & internet". Or, if using Android 7 or earlier, tap **More...** in the **Wireless & networks** section.
@@ -159,7 +169,7 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
 
 ## iOS
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode.
+> You may also connect using [IKEv2](ikev2-howto.md) (recommended) or [IPsec/XAuth](clients-xauth.md) mode.
 
 1. Go to Settings -> General -> VPN.
 1. Tap **Add VPN Configuration...**.
@@ -198,7 +208,7 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
 
 ## Linux
 
-> :information_source: You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
+> You may also connect using [IKEv2](ikev2-howto.md) mode (recommended).
 
 ### Ubuntu Linux
 
@@ -346,7 +356,7 @@ echo 1 > /proc/sys/net/ipv4/ip_no_pmtu_disc
 
 **Docker users:** Instead of running the commands above, you may apply this fix by adding `VPN_ANDROID_MTU_FIX=yes` to [your env file](https://github.com/hwdsl2/docker-ipsec-vpn-server#how-to-use-this-image), then re-create the Docker container.
 
-References: [[1]](https://wiki.strongswan.org/projects/strongswan/wiki/ForwardingAndSplitTunneling#MTUMSS-issues) [[2]](https://www.zeitgeist.se/2013/11/26/mtu-woes-in-ipsec-tunnels-how-to-fix/).
+Reference: [[1]](https://www.zeitgeist.se/2013/11/26/mtu-woes-in-ipsec-tunnels-how-to-fix/).
 
 ### Android 6 and 7
 

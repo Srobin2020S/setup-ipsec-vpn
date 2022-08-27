@@ -40,21 +40,28 @@ check_vz() {
 }
 
 check_os() {
-  os_type=centos
   rh_file="/etc/redhat-release"
-  if grep -qs "Red Hat" "$rh_file"; then
-    os_type=rhel
-  fi
-  [ -f /etc/oracle-release ] && os_type=ol
-  if grep -qs "release 7" "$rh_file"; then
-    os_ver=7
-  elif grep -qs "release 8" "$rh_file"; then
-    os_ver=8
-    grep -qi stream "$rh_file" && os_ver=8s
+  if [ -f "$rh_file" ]; then
+    os_type=centos
+    if grep -q "Red Hat" "$rh_file"; then
+      os_type=rhel
+    fi
+    [ -f /etc/oracle-release ] && os_type=ol
     grep -qi rocky "$rh_file" && os_type=rocky
     grep -qi alma "$rh_file" && os_type=alma
-    if [ "$os_type" = "centos" ] && [ "$os_ver" = "8" ]; then
-      exiterr "CentOS Linux 8 is EOL and not supported."
+    if grep -q "release 7" "$rh_file"; then
+      os_ver=7
+    elif grep -q "release 8" "$rh_file"; then
+      os_ver=8
+      grep -qi stream "$rh_file" && os_ver=8s
+      if [ "$os_type$os_ver" = "centos8" ]; then
+        exiterr "CentOS Linux 8 is EOL and not supported."
+      fi
+    elif grep -q "release 9" "$rh_file"; then
+      os_ver=9
+      grep -qi stream "$rh_file" && os_ver=9s
+    else
+      exiterr "This script only supports CentOS/RHEL 7-9."
     fi
   else
 cat 1>&2 <<'EOF'
@@ -163,14 +170,9 @@ install_pkgs_2() {
   erp="--enablerepo"
   rp1="$erp=*server-*optional*"
   rp2="$erp=*releases-optional*"
-  rp3="$erp=[Pp]ower[Tt]ools"
-  if [ "$os_type" = "ol" ] && [ "$os_ver" = "8" ]; then
-    rp3="$erp=ol8_codeready_builder"
-  fi
-  if [ "$os_type" = "ol" ] && [ "$os_ver" = "7" ]; then
+  if [ "$os_type$os_ver" = "ol7" ]; then
     rp2="$erp=ol7_optional_latest"
   fi
-  [ "$os_type" = "rhel" ] && rp3="$erp=codeready-builder-for-rhel-8-*"
   if [ "$os_ver" = "7" ]; then
     (
       set -x
@@ -179,7 +181,7 @@ install_pkgs_2() {
   else
     (
       set -x
-      yum "$rp3" -y -q install systemd-devel libevent-devel fipscheck-devel >/dev/null
+      yum -y -q install systemd-devel libevent-devel >/dev/null
     ) || exiterr2
   fi
 }

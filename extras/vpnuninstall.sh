@@ -34,15 +34,18 @@ check_root() {
 }
 
 check_os() {
-  os_type=centos
   rh_file="/etc/redhat-release"
-  if grep -qs "Red Hat" "$rh_file"; then
-    os_type=rhel
-  fi
-  [ -f /etc/oracle-release ] && os_type=ol
-  if grep -qs "release 7" "$rh_file" || grep -qs "release 8" "$rh_file"; then
+  if [ -f "$rh_file" ]; then
+    os_type=centos
+    if grep -q "Red Hat" "$rh_file"; then
+      os_type=rhel
+    fi
+    [ -f /etc/oracle-release ] && os_type=ol
     grep -qi rocky "$rh_file" && os_type=rocky
     grep -qi alma "$rh_file" && os_type=alma
+    if ! grep -q -E "release (7|8|9)" "$rh_file"; then
+      exiterr "This script only supports CentOS/RHEL 7-9."
+    fi
   elif grep -qs "Amazon Linux release 2" /etc/system-release; then
     os_type=amzn
   else
@@ -52,7 +55,7 @@ check_os() {
       [Uu]buntu)
         os_type=ubuntu
         ;;
-      [Dd]ebian)
+      [Dd]ebian|[Kk]ali)
         os_type=debian
         ;;
       [Rr]aspbian)
@@ -272,8 +275,12 @@ update_iptables_rules() {
     else
       nft_bk=$(find /etc/sysconfig -maxdepth 1 -name 'nftables.conf.old-*-*-*-*_*_*' -print0 \
         | xargs -r -0 ls -1 -t | head -1)
+      diff_count=24
+      if grep -qs "release 9" /etc/redhat-release; then
+        diff_count=38
+      fi
       if [ -f "$nft_bk" ] \
-        && [ "$(diff -y --suppress-common-lines "$IPT_FILE" "$nft_bk" | wc -l)" = "25" ]; then
+        && [ "$(diff -y --suppress-common-lines "$IPT_FILE" "$nft_bk" | wc -l)" = "$diff_count" ]; then
         bigecho "Restoring nftables rules..."
         conf_bk "$IPT_FILE"
         /bin/cp -f "$nft_bk" "$IPT_FILE" && /bin/rm -f "$nft_bk"

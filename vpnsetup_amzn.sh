@@ -26,9 +26,7 @@ YOUR_IPSEC_PSK=''
 YOUR_USERNAME=''
 YOUR_PASSWORD=''
 
-# Important notes:   vpnsetup.net/notes
-# Setup VPN clients: vpnsetup.net/clients
-# IKEv2 guide:       vpnsetup.net/ikev2
+# VPN client setup: https://vpnsetup.net/clients
 
 # =====================================================
 
@@ -327,7 +325,7 @@ conn shared
   rekey=no
   keyingtries=5
   dpddelay=30
-  dpdtimeout=120
+  dpdtimeout=300
   dpdaction=clear
   ikev2=never
   ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
@@ -546,9 +544,7 @@ Password: $VPN_PASSWORD
 
 Write these down. You'll need them to connect!
 
-Important notes:   vpnsetup.net/notes
-Setup VPN clients: vpnsetup.net/clients
-IKEv2 guide:       vpnsetup.net/ikev2
+VPN client setup: https://vpnsetup.net/clients
 
 ================================================
 
@@ -571,7 +567,7 @@ cat <<'EOF'
 IKEv2 is already set up on this server.
 
 Next steps: Configure IKEv2 clients. See:
-https://vpnsetup.net/ikev2clients
+https://vpnsetup.net/clients
 
 To manage IKEv2 clients, run: sudo ikev2.sh
 

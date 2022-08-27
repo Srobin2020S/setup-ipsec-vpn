@@ -1,6 +1,6 @@
-# 配置 IPsec/L2TP VPN 客户端
+[English](clients.md) | [中文](clients-zh.md)
 
-*其他语言版本: [English](clients.md), [中文](clients-zh.md)。*
+# 配置 IPsec/L2TP VPN 客户端
 
 **注：** 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。
 
@@ -16,9 +16,17 @@
   * [Linux](#linux)
 * [故障排除](#故障排除)
 
+<details>
+<summary>
+如果你喜欢这个项目，可以表达你的支持或感谢。
+</summary>
+
+<a href="https://ko-fi.com/hwdsl2" target="_blank"><img height="36" width="187" src="images/kofi2.png" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a> &nbsp;<a href="https://coindrop.to/hwdsl2" target="_blank"><img src="images/embed-button.png" height="36" width="145" border="0" alt="Coindrop.to me" /></a>
+</details>
+
 ## Windows
 
-> :information_source: 你也可以使用 [IKEv2](ikev2-howto-zh.md) 模式连接（推荐）。
+> 你也可以使用 [IKEv2](ikev2-howto-zh.md) 模式连接（推荐）。
 
 ### Windows 11
 
@@ -71,7 +79,9 @@
 # 不保存命令行历史记录
 Set-PSReadlineOption –HistorySaveStyle SaveNothing
 # 创建 VPN 连接
-Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress '你的 VPN 服务器 IP' -L2tpPsk '你的 VPN IPsec PSK' -TunnelType L2tp -EncryptionLevel Required -AuthenticationMethod Chap,MSChapv2 -Force -RememberCredential -PassThru
+Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress '你的 VPN 服务器 IP' ^
+  -L2tpPsk '你的 VPN IPsec PSK' -TunnelType L2tp -EncryptionLevel Required ^
+  -AuthenticationMethod Chap,MSChapv2 -Force -RememberCredential -PassThru
 # 忽略 data encryption 警告（数据在 IPsec 隧道中已被加密）
 ```
 
@@ -109,7 +119,7 @@ Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress '你的 VPN 服务器 IP' 
 
 ## OS X
 
-> :information_source: 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。
+> 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。
 
 1. 打开系统偏好设置并转到网络部分。
 1. 在窗口左下角单击 **+** 按钮。
@@ -135,7 +145,7 @@ Add-VpnConnection -Name 'My IPsec VPN' -ServerAddress '你的 VPN 服务器 IP' 
 
 ## Android
 
-> :information_source: 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。Android 12 仅支持 [IKEv2](ikev2-howto-zh.md) 模式。
+> 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。Android 12 仅支持 [IKEv2](ikev2-howto-zh.md) 模式。
 
 1. 启动 **设置** 应用程序。
 1. 单击 **网络和互联网**。或者，如果你使用 Android 7 或更早版本，在 **无线和网络** 部分单击 **更多...**。
@@ -160,7 +170,7 @@ VPN 连接成功后，会在通知栏显示图标。最后你可以到 [这里](
 
 ## iOS
 
-> :information_source: 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。
+> 你也可以使用 [IKEv2](ikev2-howto-zh.md)（推荐）或者 [IPsec/XAuth](clients-xauth-zh.md) 模式连接。
 
 1. 进入设置 -> 通用 -> VPN。
 1. 单击 **添加VPN配置...**。
@@ -199,7 +209,7 @@ VPN 连接成功后，网络状态图标上会出现 VPN 指示。最后你可�
 
 ## Linux
 
-> :information_source: 你也可以使用 [IKEv2](ikev2-howto-zh.md) 模式连接（推荐）。
+> 你也可以使用 [IKEv2](ikev2-howto-zh.md) 模式连接（推荐）。
 
 ### Ubuntu Linux
 
@@ -347,7 +357,7 @@ echo 1 > /proc/sys/net/ipv4/ip_no_pmtu_disc
 
 **Docker 用户：** 要修复这个问题，不需要运行以上命令。你可以在[你的 env 文件](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md#如何使用本镜像)中添加 `VPN_ANDROID_MTU_FIX=yes`，然后重新创建 Docker 容器。
 
-参考链接：[[1]](https://wiki.strongswan.org/projects/strongswan/wiki/ForwardingAndSplitTunneling#MTUMSS-issues) [[2]](https://www.zeitgeist.se/2013/11/26/mtu-woes-in-ipsec-tunnels-how-to-fix/)。
+参考链接：[[1]](https://www.zeitgeist.se/2013/11/26/mtu-woes-in-ipsec-tunnels-how-to-fix/)。
 
 ### Android 6 和 7
 

@@ -1,129 +1,28 @@
-# Guide: How to Set Up and Use IKEv2 VPN
+[English](ikev2-howto.md) | [中文](ikev2-howto-zh.md)
 
-*Read this in other languages: [English](ikev2-howto.md), [中文](ikev2-howto-zh.md).*
+# Guide: How to Set Up and Use IKEv2 VPN
 
 **Note:** You may also connect using [IPsec/L2TP](clients.md) or [IPsec/XAuth](clients-xauth.md) mode.
 
 * [Introduction](#introduction)
-* [Set up IKEv2 using helper script](#set-up-ikev2-using-helper-script)
 * [Configure IKEv2 VPN clients](#configure-ikev2-vpn-clients)
-* [Manage client certificates](#manage-client-certificates)
 * [Troubleshooting](#troubleshooting)
+* [Manage client certificates](#manage-client-certificates)
 * [Change IKEv2 server address](#change-ikev2-server-address)
 * [Update IKEv2 helper script](#update-ikev2-helper-script)
+* [Set up IKEv2 using helper script](#set-up-ikev2-using-helper-script)
 * [Manually set up IKEv2](#manually-set-up-ikev2)
 * [Remove IKEv2](#remove-ikev2)
-* [References](#references)
 
 ## Introduction
 
-Modern operating systems (such as Windows 7 and newer) support the IKEv2 standard. Internet Key Exchange (IKE or IKEv2) is the protocol used to set up a Security Association (SA) in the IPsec protocol suite. Compared to IKE version 1, IKEv2 contains [improvements](https://en.wikipedia.org/wiki/Internet_Key_Exchange#Improvements_with_IKEv2) such as Standard Mobility support through MOBIKE, and improved reliability.
+Modern operating systems support the IKEv2 standard. Internet Key Exchange (IKE or IKEv2) is the protocol used to set up a Security Association (SA) in the IPsec protocol suite. Compared to IKE version 1, IKEv2 contains [improvements](https://en.wikipedia.org/wiki/Internet_Key_Exchange#Improvements_with_IKEv2) such as Standard Mobility support through MOBIKE, and improved reliability.
 
-Libreswan can authenticate IKEv2 clients on the basis of X.509 Machine Certificates using RSA signatures. This method does not require an IPsec PSK, username or password. It can be used with:
+Libreswan can authenticate IKEv2 clients on the basis of X.509 Machine Certificates using RSA signatures. This method does not require an IPsec PSK, username or password. It can be used with Windows, macOS, iOS, Android, Linux and RouterOS.
 
-- Windows 7, 8, 10 and 11
-- OS X (macOS)
-- iOS (iPhone/iPad)
-- Android 4 and newer (using the strongSwan VPN client)
-- Linux
-- Mikrotik RouterOS
-
-After following this guide, you will be able to connect to the VPN using IKEv2 in addition to the existing [IPsec/L2TP](clients.md) and [IPsec/XAuth ("Cisco IPsec")](clients-xauth.md) modes.
-
-## Set up IKEv2 using helper script
-
-**Note:** By default, IKEv2 is automatically set up when running the VPN setup script. You may skip this section and continue to [configure IKEv2 VPN clients](#configure-ikev2-vpn-clients).
-
-**Important:** Before continuing, you should have successfully [set up your own VPN server](https://github.com/hwdsl2/setup-ipsec-vpn). **Docker users, see [here](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README.md#configure-and-use-ikev2-vpn)**.
-
-Use this [helper script](../extras/ikev2setup.sh) to automatically set up IKEv2 on the VPN server:
-
-```bash
-# Set up IKEv2 using default options
-sudo ikev2.sh --auto
-# Alternatively, you may customize IKEv2 options
-sudo ikev2.sh
-```
-
-**Note:** If IKEv2 is already set up, but you want to customize IKEv2 options, first [remove IKEv2](#remove-ikev2), then set it up again using `sudo ikev2.sh`.
-
-When finished, continue to [configure IKEv2 VPN clients](#configure-ikev2-vpn-clients). Advanced users can optionally enable [IKEv2-only mode](advanced-usage.md#ikev2-only-vpn).
-
-<details>
-<summary>
-Error: "sudo: ikev2.sh: command not found".
-</summary>
-
-This is normal if you used an older version of the VPN setup script. First, download the IKEv2 helper script:
-
-```bash
-wget https://get.vpnsetup.net/ikev2 -O /opt/src/ikev2.sh
-chmod +x /opt/src/ikev2.sh && ln -s /opt/src/ikev2.sh /usr/bin
-```
-
-Then run the script using the instructions above.
-</details>
-<details>
-<summary>
-You may optionally specify a DNS name, client name and/or custom DNS servers.
-</summary>
-
-When running IKEv2 setup in auto mode, advanced users can optionally specify a DNS name for the IKEv2 server address. The DNS name must be a fully qualified domain name (FQDN). Example:
-
-```bash
-sudo VPN_DNS_NAME='vpn.example.com' ikev2.sh --auto
-```
-
-Similarly, you may specify a name for the first IKEv2 client. The default is `vpnclient` if not specified.
-
-```bash
-sudo VPN_CLIENT_NAME='your_client_name' ikev2.sh --auto
-```
-
-By default, IKEv2 clients are set to use [Google Public DNS](https://developers.google.com/speed/public-dns/) when the VPN is active. You may specify custom DNS server(s) for IKEv2. Example:
-
-```bash
-sudo VPN_DNS_SRV1=1.1.1.1 VPN_DNS_SRV2=1.0.0.1 ikev2.sh --auto
-```
-
-By default, no password is required when importing IKEv2 client configuration. You can choose to protect client config files using a random password.
-
-```bash
-sudo VPN_PROTECT_CONFIG=yes ikev2.sh --auto
-```
-</details>
-<details>
-<summary>
-Learn how to change the IKEv2 server address.
-</summary>
-
-In certain circumstances, you may need to change the IKEv2 server address after setup. For example, to switch to use a DNS name, or after server IP changes. Learn more in [this section](#change-ikev2-server-address).
-</details>
-<details>
-<summary>
-View usage information for the IKEv2 script.
-</summary>
-
-```
-Usage: bash ikev2.sh [options]
-
-Options:
-  --auto                        run IKEv2 setup in auto mode using default options (for initial setup only)
-  --addclient [client name]     add a new client using default options
-  --exportclient [client name]  export configuration for an existing client
-  --listclients                 list the names of existing clients
-  --revokeclient [client name]  revoke a client certificate
-  --deleteclient [client name]  delete a client certificate
-  --removeikev2                 remove IKEv2 and delete all certificates and keys from the IPsec database
-  -h, --help                    show this help message and exit
-
-To customize IKEv2 or client options, run this script without arguments.
-```
-</details>
+By default, IKEv2 is automatically set up when running the VPN setup script. If you want to learn more about setting up IKEv2, see [Set up IKEv2 using helper script](#set-up-ikev2-using-helper-script). Docker users, see [Configure and use IKEv2 VPN](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README.md#configure-and-use-ikev2-vpn).
 
 ## Configure IKEv2 VPN clients
-
-*Read this in other languages: [English](ikev2-howto.md#configure-ikev2-vpn-clients), [中文](ikev2-howto-zh.md#配置-ikev2-vpn-客户端).*
 
 **Note:** To add or export IKEv2 clients, run `sudo ikev2.sh`. Use `-h` to show usage. Client config files can be safely deleted after import.
 
@@ -134,9 +33,26 @@ To customize IKEv2 or client options, run this script without arguments.
 * [Linux](#linux)
 * [Mikrotik RouterOS](#routeros)
 
+<details>
+<summary>
+Like this project? You can show your support or appreciation.
+</summary>
+
+<a href="https://ko-fi.com/hwdsl2" target="_blank"><img height="36" width="187" src="images/kofi2.png" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a> &nbsp;<a href="https://coindrop.to/hwdsl2" target="_blank"><img src="images/embed-button.png" height="36" width="145" border="0" alt="Coindrop.to me" /></a>
+</details>
+<details>
+<summary>
+Learn how to change the IKEv2 server address.
+</summary>
+
+In certain circumstances, you may need to change the IKEv2 server address. For example, to switch to use a DNS name, or after server IP changes. Learn more in [this section](#change-ikev2-server-address).
+</details>
+
 ### Windows 7, 8, 10 and 11
 
 #### Auto-import configuration
+
+[**Screencast:** IKEv2 Auto Import Configuration (supporters)](https://ko-fi.com/post/IKEv2-Auto-Import-Configuration-on-Windows-8-10-a-K3K1DQCHW)
 
 **Windows 8, 10 and 11** users can automatically import IKEv2 configuration:
 
@@ -145,9 +61,13 @@ To customize IKEv2 or client options, run this script without arguments.
 1. Right-click on the saved script, select **Properties**. Click on **Unblock** at the bottom, then click on **OK**.
 1. Right-click on the saved script, select **Run as administrator** and follow the prompts.
 
+To connect to the VPN: Click on the wireless/network icon in your system tray, select the new VPN entry, and click **Connect**. Once successfully connected, you can verify that your traffic is being routed properly by [looking up your IP address on Google](https://www.google.com/search?q=my+ip). It should say "Your public IP address is `Your VPN Server IP`".
+
 If you get an error when trying to connect, see [Troubleshooting](#troubleshooting).
 
 #### Manually import configuration
+
+[**Screencast:** IKEv2 Manually Import Configuration (supporters)](https://ko-fi.com/post/Video-IKEv2-Manually-Import-Configuration-H2H1DS8SV)
 
 Alternatively, **Windows 7, 8, 10 and 11** users can manually import IKEv2 configuration:
 
@@ -162,7 +82,7 @@ Alternatively, **Windows 7, 8, 10 and 11** users can manually import IKEv2 confi
 
    **Note:** If there is no password for client config files, press Enter to continue, or if manually importing the `.p12` file, leave the password field blank.
 
-   Alternatively, you can [manually import the .p12 file](https://wiki.strongswan.org/projects/strongswan/wiki/Win7Certs). Make sure that the client cert is placed in "Personal -> Certificates", and the CA cert is placed in "Trusted Root Certification Authorities -> Certificates".
+   Alternatively, you can [manually import the .p12 file](https://wiki.strongswan.org/projects/strongswan/wiki/Win7Certs/9). Make sure that the client cert is placed in "Personal -> Certificates", and the CA cert is placed in "Trusted Root Certification Authorities -> Certificates".
 
 1. On the Windows computer, add a new IKEv2 VPN connection.
 
@@ -170,18 +90,23 @@ Alternatively, **Windows 7, 8, 10 and 11** users can manually import IKEv2 confi
 
    ```console
    # Create VPN connection (replace server address with your own value)
-   powershell -command "Add-VpnConnection -ServerAddress 'Your VPN Server IP (or DNS name)' -Name 'My IKEv2 VPN' -TunnelType IKEv2 -AuthenticationMethod MachineCertificate -EncryptionLevel Required -PassThru"
+   powershell -command ^"Add-VpnConnection -ServerAddress 'Your VPN Server IP (or DNS name)' ^
+     -Name 'My IKEv2 VPN' -TunnelType IKEv2 -AuthenticationMethod MachineCertificate ^
+     -EncryptionLevel Required -PassThru^"
    # Set IPsec configuration
-   powershell -command "Set-VpnConnectionIPsecConfiguration -ConnectionName 'My IKEv2 VPN' -AuthenticationTransformConstants GCMAES128 -CipherTransformConstants GCMAES128 -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PfsGroup None -DHGroup Group14 -PassThru -Force"
+   powershell -command ^"Set-VpnConnectionIPsecConfiguration -ConnectionName 'My IKEv2 VPN' ^
+     -AuthenticationTransformConstants GCMAES128 -CipherTransformConstants GCMAES128 ^
+     -EncryptionMethod AES256 -IntegrityCheckMethod SHA256 -PfsGroup None ^
+     -DHGroup Group14 -PassThru -Force^"
    ```
 
-   **Windows 7** does not support these commands, you can [manually create the VPN connection](https://wiki.strongswan.org/projects/strongswan/wiki/Win7Config).
+   **Windows 7** does not support these commands, you can [manually create the VPN connection](https://wiki.strongswan.org/projects/strongswan/wiki/Win7Config/8).
 
    **Note:** The server address you specify must **exactly match** the server address in the output of the IKEv2 helper script. For example, if you specified the server's DNS name during IKEv2 setup, you must enter the DNS name in the **Internet address** field.
 
 1. **This step is required if you manually created the VPN connection.**
 
-   Enable stronger ciphers for IKEv2 with a one-time registry change. Download and import the `.reg` file below, or run the following from an elevated command prompt. Read more [here](https://wiki.strongswan.org/projects/strongswan/wiki/WindowsClients#AES-256-CBC-and-MODP2048).
+   Enable stronger ciphers for IKEv2 with a one-time registry change. Download and import the `.reg` file below, or run the following from an elevated command prompt. Read more [here](https://docs.strongswan.org/docs/5.9/interop/windowsClients.html).
 
    - For Windows 7, 8, 10 and 11 ([download .reg file](https://github.com/hwdsl2/vpn-extras/releases/download/v1.0.0/Enable_Stronger_Ciphers_for_IKEv2_on_Windows.reg))
 
@@ -346,6 +271,32 @@ To remove the IKEv2 VPN connection, open Settings -> General -> VPN & Device Man
 
 <details>
 <summary>
+Alternatively, Android 11+ users can also connect using the native IKEv2 client.
+</summary>
+
+1. Securely transfer the generated `.p12` file to your Android device.
+1. Launch the **Settings** application.
+1. Go to Security -> Advanced -> Encryption & credentials.
+1. Tap **Install a certificate**.
+1. Tap **VPN & app user certificate**.
+1. Choose the `.p12` file you transferred from the VPN server.   
+   **Note:** To find the `.p12` file, tap the three-line menu button, then browse to the location you saved the file.
+1. Enter a name for the certificate, then tap **OK**.
+1. Go to Settings -> Network & internet -> VPN, then tap the "+" button.
+1. Enter a name for the VPN profile.
+1. Select **IKEv2/IPSec RSA** from the **Type** drop-down menu.
+1. Enter `Your VPN Server IP` (or DNS name) in the **Server address** field.   
+   **Note:** This must **exactly match** the server address in the output of the IKEv2 helper script.
+1. Enter anything (e.g. `empty`) in the **IPSec identifier** field.   
+   **Note:** This field should not be required. It is a bug in Android.
+1. Select the certificate you imported from the **IPSec user certificate** drop-down menu.
+1. Select the certificate you imported from the **IPSec CA certificate** drop-down menu.
+1. Select **(receive from server)** from the **IPSec server certificate** drop-down menu.
+1. Tap **Save**. Then tap the new VPN connection and tap **Connect**.
+</details>
+
+<details>
+<summary>
 If your device runs Android 6.0 or older, click here for additional instructions.
 </summary>
 
@@ -365,7 +316,8 @@ If you manually set up IKEv2 without using the helper script, click here for ins
 1. Install strongSwan VPN Client from [**Google Play**](https://play.google.com/store/apps/details?id=org.strongswan.android), [**F-Droid**](https://f-droid.org/en/packages/org.strongswan.android/) or [**strongSwan download server**](https://download.strongswan.org/Android/).
 1. Launch the **Settings** application.
 1. Go to Security -> Advanced -> Encryption & credentials.
-1. Tap **Install certificates from storage (or SD card)**.
+1. Tap **Install a certificate**.
+1. Tap **VPN & app user certificate**.
 1. Choose the `.p12` file you transferred from the VPN server, and follow the prompts.   
    **Note:** To find the `.p12` file, tap the three-line menu button, then browse to the location you saved the file.
 1. Launch the strongSwan VPN client and tap **Add VPN Profile**.
@@ -461,7 +413,7 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
 
 ### RouterOS
 
-**Note:** These steps were contributed by [@Unix-User](https://github.com/Unix-User).
+**Note:** These steps were contributed by [@Unix-User](https://github.com/Unix-User). It is recommended to run terminal commands via an SSH connection, e.g. via Putty.
 
 1. Securely transfer the generated `.p12` file to your computer.
 
@@ -483,6 +435,29 @@ If you get an error when trying to connect, see [Troubleshooting](#troubleshooti
    ![routeros import certificate](images/routeros-import-cert.gif)
    </details>
 
+   Or you can use terminal instead (empty passphrase):
+
+   ```bash
+   [admin@MikroTik] > /certificate/import file-name=mikrotik.p12
+   passphrase:
+
+     certificates-imported: 2
+     private-keys-imported: 0
+            files-imported: 1
+       decryption-failures: 0
+     keys-with-no-certificate: 0
+
+   [admin@MikroTik] > /certificate/import file-name=mikrotik.p12
+   passphrase:
+
+        certificates-imported: 0
+        private-keys-imported: 1
+               files-imported: 1
+          decryption-failures: 0
+     keys-with-no-certificate: 0
+
+   ```
+
 3. Run these commands in terminal. Replace the following with your own values.
 `YOUR_VPN_SERVER_IP_OR_DNS_NAME` is your VPN server IP or DNS name.
 `IMPORTED_CERTIFICATE` is the name of the certificate from step 2 above, e.g. `vpnclient.p12_0`
@@ -492,29 +467,83 @@ Assuming that your local network behind RouterOS is `192.168.0.0/24`, you can us
 for the entire network, or use `192.168.0.10` for just one device, and so on.
 
    ```bash
-   /ip firewall address-list
-   add address=THESE_ADDRESSES_GO_THROUGH_VPN list=local
-   /ip ipsec mode-config
-   add name=ike2-rw responder=no src-address-list=local
-   /ip ipsec policy group
-   add name=ike2-rw
-   /ip ipsec profile
-   add name=ike2-rw
-   /ip ipsec peer
-   add address=YOUR_VPN_SERVER_IP_OR_DNS_NAME exchange-mode=ike2 name=ike2-rw-client profile=ike2-rw
-   /ip ipsec proposal
-   add name=ike2-rw pfs-group=none
-   /ip ipsec identity
-   add auth-method=digital-signature certificate=IMPORTED_CERTIFICATE generate-policy=port-strict mode-config=ike2-rw \
+   /ip firewall address-list add address=THESE_ADDRESSES_GO_THROUGH_VPN list=local
+   /ip ipsec mode-config add name=ike2-rw responder=no src-address-list=local
+   /ip ipsec policy group add name=ike2-rw
+   /ip ipsec profile add name=ike2-rw
+   /ip ipsec peer add address=YOUR_VPN_SERVER_IP_OR_DNS_NAME exchange-mode=ike2 \
+       name=ike2-rw-client profile=ike2-rw
+   /ip ipsec proposal add name=ike2-rw pfs-group=none
+   /ip ipsec identity add auth-method=digital-signature certificate=IMPORTED_CERTIFICATE \
+       generate-policy=port-strict mode-config=ike2-rw \
        peer=ike2-rw-client policy-template-group=ike2-rw
-   /ip ipsec policy
-   add group=ike2-rw proposal=ike2-rw template=yes
+   /ip ipsec policy add group=ike2-rw proposal=ike2-rw template=yes
    ```
 4. For more information, see [#1112](https://github.com/hwdsl2/setup-ipsec-vpn/issues/1112#issuecomment-1059628623).
 
 > tested on   
 > mar/02/2022 12:52:57 by RouterOS 6.48   
 > RouterBOARD 941-2nD
+
+## Troubleshooting
+
+*Read this in other languages: [English](ikev2-howto.md#troubleshooting), [中文](ikev2-howto-zh.md#故障排除).*
+
+**See also:** [Check logs and VPN status](clients.md#check-logs-and-vpn-status), [IKEv1 troubleshooting](clients.md#troubleshooting) and [Advanced usage](advanced-usage.md).
+
+* [Unable to connect multiple IKEv2 clients](#unable-to-connect-multiple-ikev2-clients)
+* [IKE authentication credentials are unacceptable](#ike-authentication-credentials-are-unacceptable)
+* [Policy match error](#policy-match-error)
+* [Cannot open websites after connecting to IKEv2](#cannot-open-websites-after-connecting-to-ikev2)
+* [Windows 10 connecting](#windows-10-connecting)
+* [Other known issues](#other-known-issues)
+
+### Unable to connect multiple IKEv2 clients
+
+To connect multiple IKEv2 clients at the same time, you must [generate a unique certificate](#add-a-client-certificate) for each client.
+
+### IKE authentication credentials are unacceptable
+
+If you encounter this error, make sure that the VPN server address specified on your VPN client device **exactly matches** the server address in the output of the IKEv2 helper script. For example, you cannot use a DNS name to connect if it was not specified when setting up IKEv2. To change the IKEv2 server address, read [this section](#change-ikev2-server-address).
+
+### Policy match error
+
+To fix this error, you will need to enable stronger ciphers for IKEv2 with a one-time registry change. Download and import the `.reg` file below, or run the following from an elevated command prompt.
+
+- For Windows 7, 8, 10 and 11 ([download .reg file](https://github.com/hwdsl2/vpn-extras/releases/download/v1.0.0/Enable_Stronger_Ciphers_for_IKEv2_on_Windows.reg))
+
+```console
+REG ADD HKLM\SYSTEM\CurrentControlSet\Services\RasMan\Parameters /v NegotiateDH2048_AES256 /t REG_DWORD /d 0x1 /f
+```
+
+### Cannot open websites after connecting to IKEv2
+
+If your VPN client device cannot open websites after successfully connecting to IKEv2, try the following fixes:
+
+1. Some cloud providers, such as [Google Cloud](https://cloud.google.com), [set a lower MTU by default](https://cloud.google.com/network-connectivity/docs/vpn/concepts/mtu-considerations). This could cause network issues with IKEv2 VPN clients. To fix, try setting the MTU to 1500 on the VPN server:
+
+   ```bash
+   # Replace ens4 with the network interface name on your server
+   sudo ifconfig ens4 mtu 1500
+   ```
+
+   This setting **does not** persist after a reboot. To change the MTU size permanently, refer to relevant articles on the web.
+
+1. If changing the MTU size does not fix the issue, try the fix in [Android MTU/MSS issues](clients.md#android-mtumss-issues).
+
+1. In certain circumstances, Windows does not use the DNS servers specified by IKEv2 after connecting. This can be fixed by manually entering DNS servers such as Google Public DNS (8.8.8.8, 8.8.4.4) in network interface properties -> TCP/IPv4.
+
+### Windows 10 connecting
+
+If using Windows 10 and the VPN is stuck on "connecting" for more than a few minutes, try these steps:
+
+1. Right-click on the wireless/network icon in your system tray.
+1. Select **Open Network & Internet settings**, then on the page that opens, click **VPN** on the left.
+1. Select the new VPN entry, then click **Connect**.
+
+### Other known issues
+
+The built-in VPN client in Windows may not support IKEv2 fragmentation (this feature [requires](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-ikee/74df968a-7125-431d-9c98-4ea929e548dc) Windows 10 v1803 or newer). On some networks, this can cause the connection to fail or have other issues. You may instead try the [IPsec/L2TP](clients.md) or [IPsec/XAuth](clients-xauth.md) mode.
 
 ## Manage client certificates
 
@@ -689,7 +718,7 @@ Alternatively, you can manually revoke a client certificate. This can be done us
        CRL Extensions:
    ```
 
-   **Note:** If you want to remove a certificate from the CRL, replace `addcert 3446275956 20200606220100Z` above with `rmcert 3446275956`. For other `crlutil` usage, read [here](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/tools/NSS_Tools_crlutil).
+   **Note:** If you want to remove a certificate from the CRL, replace `addcert 3446275956 20200606220100Z` above with `rmcert 3446275956`. For other `crlutil` usage, read [here](https://firefox-source-docs.mozilla.org/security/nss/legacy/tools/nss_tools_crlutil/index.html).
 
 1. Finally, let Libreswan re-read the updated CRL.
 
@@ -697,72 +726,6 @@ Alternatively, you can manually revoke a client certificate. This can be done us
    ipsec crls
    ```
 </details>
-
-## Troubleshooting
-
-*Read this in other languages: [English](ikev2-howto.md#troubleshooting), [中文](ikev2-howto-zh.md#故障排除).*
-
-**See also:** [Check logs and VPN status](clients.md#check-logs-and-vpn-status), [IKEv1 troubleshooting](clients.md#troubleshooting) and [Advanced usage](advanced-usage.md).
-
-* [Cannot open websites after connecting to IKEv2](#cannot-open-websites-after-connecting-to-ikev2)
-* [IKE authentication credentials are unacceptable](#ike-authentication-credentials-are-unacceptable)
-* [Policy match error](#policy-match-error)
-* [IKEv2 disconnects after one hour](#ikev2-disconnects-after-one-hour)
-* [Unable to connect multiple IKEv2 clients](#unable-to-connect-multiple-ikev2-clients)
-* [Other known issues](#other-known-issues)
-
-### Cannot open websites after connecting to IKEv2
-
-If your VPN client device cannot open websites after successfully connecting to IKEv2, try the following fixes:
-
-1. Some cloud providers, such as [Google Cloud](https://cloud.google.com), [set a lower MTU by default](https://cloud.google.com/network-connectivity/docs/vpn/concepts/mtu-considerations). This could cause network issues with IKEv2 VPN clients. To fix, try setting the MTU to 1500 on the VPN server:
-
-   ```bash
-   # Replace ens4 with the network interface name on your server
-   sudo ifconfig ens4 mtu 1500
-   ```
-
-   This setting **does not** persist after a reboot. To change the MTU size permanently, refer to relevant articles on the web.
-
-1. If changing the MTU size does not fix the issue, try the fix in [Android MTU/MSS issues](clients.md#android-mtumss-issues).
-
-1. In certain circumstances, Windows does not use the DNS servers specified by IKEv2 after connecting. This can be fixed by manually entering DNS servers such as Google Public DNS (8.8.8.8, 8.8.4.4) in network interface properties -> TCP/IPv4.
-
-### IKE authentication credentials are unacceptable
-
-If you encounter this error, make sure that the VPN server address specified on your VPN client device **exactly matches** the server address in the output of the IKEv2 helper script. For example, you cannot use a DNS name to connect if it was not specified when setting up IKEv2. To change the IKEv2 server address, read [this section](#change-ikev2-server-address).
-
-### Policy match error
-
-To fix this error, you will need to enable stronger ciphers for IKEv2 with a one-time registry change. Download and import the `.reg` file below, or run the following from an elevated command prompt.
-
-- For Windows 7, 8, 10 and 11 ([download .reg file](https://github.com/hwdsl2/vpn-extras/releases/download/v1.0.0/Enable_Stronger_Ciphers_for_IKEv2_on_Windows.reg))
-
-```console
-REG ADD HKLM\SYSTEM\CurrentControlSet\Services\RasMan\Parameters /v NegotiateDH2048_AES256 /t REG_DWORD /d 0x1 /f
-```
-
-### IKEv2 disconnects after one hour
-
-If the IKEv2 connection disconnects automatically after one hour (60 minutes), apply this fix: Edit `/etc/ipsec.d/ikev2.conf` on the VPN server (or `/etc/ipsec.conf` if it does not exist), append these lines to the end of section `conn ikev2-cp`, indented by two spaces:
-
-```
-  ikelifetime=24h
-  salifetime=24h
-```
-
-Save the file and run `service ipsec restart`. As of 2021-01-20, the IKEv2 helper script was updated to include this fix.
-
-### Unable to connect multiple IKEv2 clients
-
-To connect multiple IKEv2 clients, you must [generate a unique certificate](#add-a-client-certificate) for each.
-
-If you are unable to connect multiple IKEv2 clients from behind the same NAT (e.g. home router), apply this fix: Edit `/etc/ipsec.d/ikev2.conf` on the VPN server, find the line `leftid=@<your_server_ip>` and remove the `@`, i.e. replace it with `leftid=<your_server_ip>`. Save the file and run `service ipsec restart`. Do not apply this fix if `leftid` is a DNS name, which is not affected. As of 2021-02-01, the IKEv2 helper script was updated to include this fix.
-
-### Other known issues
-
-1. The built-in VPN client in Windows may not support IKEv2 fragmentation (this feature [requires](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-ikee/74df968a-7125-431d-9c98-4ea929e548dc) Windows 10 v1803 or newer). On some networks, this can cause the connection to fail or have other issues. You may instead try the [IPsec/L2TP](clients.md) or [IPsec/XAuth](clients-xauth.md) mode.
-1. If using the strongSwan Android VPN client, you must [update Libreswan](../README.md#upgrade-libreswan) on your server to version 3.26 or above.
 
 ## Change IKEv2 server address
 
@@ -785,6 +748,90 @@ The IKEv2 helper script is updated from time to time for bug fixes and improveme
 wget https://get.vpnsetup.net/ikev2 -O /opt/src/ikev2.sh
 chmod +x /opt/src/ikev2.sh && ln -s /opt/src/ikev2.sh /usr/bin 2>/dev/null
 ```
+
+## Set up IKEv2 using helper script
+
+**Note:** By default, IKEv2 is automatically set up when running the VPN setup script. You may skip this section and continue to [configure IKEv2 VPN clients](#configure-ikev2-vpn-clients).
+
+**Important:** Before continuing, you should have successfully [set up your own VPN server](https://github.com/hwdsl2/setup-ipsec-vpn). **Docker users, see [here](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README.md#configure-and-use-ikev2-vpn)**.
+
+Use this [helper script](../extras/ikev2setup.sh) to automatically set up IKEv2 on the VPN server:
+
+```bash
+# Set up IKEv2 using default options
+sudo ikev2.sh --auto
+# Alternatively, you may customize IKEv2 options
+sudo ikev2.sh
+```
+
+**Note:** If IKEv2 is already set up, but you want to customize IKEv2 options, first [remove IKEv2](#remove-ikev2), then set it up again using `sudo ikev2.sh`.
+
+When finished, continue to [configure IKEv2 VPN clients](#configure-ikev2-vpn-clients). Advanced users can optionally enable [IKEv2-only mode](advanced-usage.md#ikev2-only-vpn).
+
+<details>
+<summary>
+Error: "sudo: ikev2.sh: command not found".
+</summary>
+
+This is normal if you used an older version of the VPN setup script. First, download the IKEv2 helper script:
+
+```bash
+wget https://get.vpnsetup.net/ikev2 -O /opt/src/ikev2.sh
+chmod +x /opt/src/ikev2.sh && ln -s /opt/src/ikev2.sh /usr/bin
+```
+
+Then run the script using the instructions above.
+</details>
+<details>
+<summary>
+You may optionally specify a DNS name, client name and/or custom DNS servers.
+</summary>
+
+When running IKEv2 setup in auto mode, advanced users can optionally specify a DNS name for the IKEv2 server address. The DNS name must be a fully qualified domain name (FQDN). Example:
+
+```bash
+sudo VPN_DNS_NAME='vpn.example.com' ikev2.sh --auto
+```
+
+Similarly, you may specify a name for the first IKEv2 client. The default is `vpnclient` if not specified.
+
+```bash
+sudo VPN_CLIENT_NAME='your_client_name' ikev2.sh --auto
+```
+
+By default, IKEv2 clients are set to use [Google Public DNS](https://developers.google.com/speed/public-dns/) when the VPN is active. You may specify custom DNS server(s) for IKEv2. Example:
+
+```bash
+sudo VPN_DNS_SRV1=1.1.1.1 VPN_DNS_SRV2=1.0.0.1 ikev2.sh --auto
+```
+
+By default, no password is required when importing IKEv2 client configuration. You can choose to protect client config files using a random password.
+
+```bash
+sudo VPN_PROTECT_CONFIG=yes ikev2.sh --auto
+```
+</details>
+<details>
+<summary>
+View usage information for the IKEv2 script.
+</summary>
+
+```
+Usage: bash ikev2.sh [options]
+
+Options:
+  --auto                        run IKEv2 setup in auto mode using default options (for initial setup only)
+  --addclient [client name]     add a new client using default options
+  --exportclient [client name]  export configuration for an existing client
+  --listclients                 list the names of existing clients
+  --revokeclient [client name]  revoke a client certificate
+  --deleteclient [client name]  delete a client certificate
+  --removeikev2                 remove IKEv2 and delete all certificates and keys from the IPsec database
+  -h, --help                    show this help message and exit
+
+To customize IKEv2 or client options, run this script without arguments.
+```
+</details>
 
 ## Manually set up IKEv2
 
@@ -837,7 +884,7 @@ View example steps for manually configuring IKEv2 with Libreswan.
      rightrsasigkey=%cert
      narrowing=yes
      dpddelay=30
-     dpdtimeout=120
+     retransmit-timeout=300s
      dpdaction=clear
      auto=add
      ikev2=insist
@@ -866,7 +913,7 @@ View example steps for manually configuring IKEv2 with Libreswan.
    EOF
    ```
 
-   **Note:** The [MOBIKE](https://wiki.strongswan.org/projects/strongswan/wiki/MobIke) IKEv2 extension allows VPN clients to change network attachment points, e.g. switch between mobile data and Wi-Fi and keep the IPsec tunnel up on the new IP. If your server (or Docker host) is **NOT** running Ubuntu Linux, and you wish to enable MOBIKE support, replace `mobike=no` with `mobike=yes` in the command above. **DO NOT** enable this option on Ubuntu systems or Raspberry Pis.
+   **Note:** The MOBIKE IKEv2 extension allows VPN clients to change network attachment points, e.g. switch between mobile data and Wi-Fi and keep the IPsec tunnel up on the new IP. If your server (or Docker host) is **NOT** running Ubuntu Linux, and you wish to enable MOBIKE support, replace `mobike=no` with `mobike=yes` in the command above. **DO NOT** enable this option on Ubuntu systems or Raspberry Pis.
 
    For Libreswan 3.19-3.22:
 
@@ -986,7 +1033,7 @@ View example steps for manually configuring IKEv2 with Libreswan.
    vpnclient                                          u,u,u
    ```
 
-   **Note:** To display a certificate, use `certutil -L -d sql:/etc/ipsec.d -n "Nickname"`. To revoke a client certificate, follow [these steps](#revoke-a-client-certificate). For other `certutil` usage, read [here](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/tools/NSS_Tools_certutil).
+   **Note:** To display a certificate, use `certutil -L -d sql:/etc/ipsec.d -n "Nickname"`. To revoke a client certificate, follow [these steps](#revoke-a-client-certificate). For other `certutil` usage, read [here](https://firefox-source-docs.mozilla.org/security/nss/legacy/tools/nss_tools_certutil/index.html).
 
 1. **(Important) Restart the IPsec service**:
 
@@ -1066,10 +1113,10 @@ To manually remove IKEv2 from the VPN server, but keep the [IPsec/L2TP](clients.
 * https://libreswan.org/wiki/VPN_server_for_remote_clients_using_IKEv2
 * https://libreswan.org/wiki/HOWTO:_Using_NSS_with_libreswan
 * https://libreswan.org/man/ipsec.conf.5.html
-* https://wiki.strongswan.org/projects/strongswan/wiki/WindowsClients
-* https://wiki.strongswan.org/projects/strongswan/wiki/AndroidVpnClient
-* https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/tools/NSS_Tools_certutil
-* https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/tools/NSS_Tools_crlutil
+* https://docs.strongswan.org/docs/5.9/interop/windowsClients.html
+* https://docs.strongswan.org/docs/5.9/os/androidVpnClient.html
+* https://firefox-source-docs.mozilla.org/security/nss/legacy/tools/nss_tools_certutil/index.html
+* https://firefox-source-docs.mozilla.org/security/nss/legacy/tools/nss_tools_crlutil/index.html
 
 ## License
 

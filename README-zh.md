@@ -10,8 +10,6 @@ IPsec VPN 可以加密你的网络流量，以防止在通过因特网传送时�
 
 我们将使用 [Libreswan](https://libreswan.org/) 作为 IPsec 服务器，以及 [xl2tpd](https://github.com/xelerance/xl2tpd) 作为 L2TP 提供者。
 
-**&raquo; 另见：[OpenVPN](https://github.com/hwdsl2/openvpn-install/blob/master/README-zh.md) 和 [WireGuard](https://github.com/hwdsl2/wireguard-install/blob/master/README-zh.md) 一键安装脚本**
-
 ## 快速开始
 
 首先，在你的 Linux 服务器\* 上全新安装 Ubuntu, Debian 或者 CentOS。
@@ -24,7 +22,7 @@ wget https://get.vpnsetup.net -O vpn.sh && sudo sh vpn.sh
 
 你的 VPN 登录凭证将会被自动随机生成，并在安装完成后显示。
 
-安装完成后，你可以在同一台服务器上安装 [OpenVPN](https://github.com/hwdsl2/openvpn-install/blob/master/README-zh.md) 和/或 [WireGuard](https://github.com/hwdsl2/wireguard-install/blob/master/README-zh.md)。这是可选的。
+**可选：** 在同一台服务器上安装 [WireGuard](https://github.com/hwdsl2/wireguard-install/blob/master/README-zh.md) 和/或 [OpenVPN](https://github.com/hwdsl2/openvpn-install/blob/master/README-zh.md)。
 
 <details>
 <summary>
@@ -37,10 +35,11 @@ wget https://get.vpnsetup.net -O vpn.sh && sudo sh vpn.sh
 curl -fsSL https://get.vpnsetup.net -o vpn.sh && sudo sh vpn.sh
 ```
 
-或者，你也可以使用这个链接：
+或者，你也可以使用这些链接：
 
 ```bash
-curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh -o vpn.sh && sudo sh vpn.sh
+https://github.com/hwdsl2/setup-ipsec-vpn/raw/master/vpnsetup.sh
+https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh
 ```
 
 如果无法下载，打开 [vpnsetup.sh](vpnsetup.sh)，然后点击右边的 `Raw` 按钮。按快捷键 `Ctrl/Cmd+A` 全选，`Ctrl/Cmd+C` 复制，然后粘贴到你喜欢的编辑器。
@@ -72,13 +71,13 @@ curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh -o
 一个云服务器，虚拟专用服务器 (VPS) 或者专用服务器，全新安装以下操作系统之一：
 
 - Ubuntu 22.04, 20.04 或者 18.04
-- Debian 11[\*](#debian-10-note), 10[\*](#debian-10-note) 或者 9
-- CentOS 7 或者 CentOS Stream 8[\*\*](#centos-8-note)
-- Rocky Linux 或者 AlmaLinux 8
-- Oracle Linux 8 或者 7
-- Red Hat Enterprise Linux (RHEL) 8 或者 7
+- Debian 11 或者 10
+- CentOS 7 或者 CentOS Stream 9/8
+- Rocky Linux 或者 AlmaLinux 9/8
+- Oracle Linux 9, 8 或者 7
+- Red Hat Enterprise Linux (RHEL) 9, 8 或者 7
 - Amazon Linux 2
-- Alpine Linux 3.15 或者 3.14
+- Alpine Linux 3.16 或者 3.15
 
 这也包括公共云服务中的 Linux 虚拟机，例如 [DigitalOcean](https://blog.ls20.com/digitalocean), [Vultr](https://blog.ls20.com/vultr), [Linode](https://blog.ls20.com/linode), [OVH](https://www.ovhcloud.com/en/vps/) 和 [Microsoft Azure](https://azure.microsoft.com)。公共云用户也可以使用[用户数据](https://blog.ls20.com/ipsec-l2tp-vpn-auto-setup-for-ubuntu-12-04-on-amazon-ec2/#vpnsetup)部署。
 
@@ -86,12 +85,9 @@ curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh -o
 
 [**&raquo; 我想建立并使用自己的 VPN，但是没有可用的服务器**](https://blog.ls20.com/ipsec-l2tp-vpn-auto-setup-for-ubuntu-12-04-on-amazon-ec2/#gettingavps)
 
-另外，你也可以使用预构建的 [Docker 镜像](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md)。高级用户可以在 [Raspberry Pi](https://www.raspberrypi.org) 上安装。[[1]](https://elasticbyte.net/posts/setting-up-a-native-cisco-ipsec-vpn-server-using-a-raspberry-pi/) [[2]](https://www.stewright.me/2018/07/create-a-raspberry-pi-vpn-server-using-l2tpipsec/)
+对于有外部防火墙的服务器（比如 [EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-security-groups.html)/[GCE](https://cloud.google.com/vpc/docs/firewalls)），请为 VPN 打开 UDP 端口 500 和 4500。
 
-<a name="debian-10-note"></a>
-\* Debian 11/10 用户需要 [使用标准的 Linux 内核](docs/clients-zh.md#debian-10-内核)。   
-<a name="centos-8-note"></a>
-\*\* 对 CentOS Linux 8 的支持 [已经结束](https://www.centos.org/centos-linux-eol/)。
+另外，你也可以使用预构建的 [Docker 镜像](https://github.com/hwdsl2/docker-ipsec-vpn-server/blob/master/README-zh.md)。高级用户可以在 [Raspberry Pi](https://www.raspberrypi.org) 上安装。[[1]](https://elasticbyte.net/posts/setting-up-a-native-cisco-ipsec-vpn-server-using-a-raspberry-pi/) [[2]](https://www.stewright.me/2018/07/create-a-raspberry-pi-vpn-server-using-l2tpipsec/)
 
 :warning: **不要** 在你的 PC 或者 Mac 上运行这些脚本！它们只能用在服务器上！
 
@@ -130,14 +126,14 @@ VPN_PASSWORD='你的VPN密码' \
 sh vpn.sh
 ```
 
-安装完成后，你可以在同一台服务器上安装 [OpenVPN](https://github.com/hwdsl2/openvpn-install/blob/master/README-zh.md) 和/或 [WireGuard](https://github.com/hwdsl2/wireguard-install/blob/master/README-zh.md)。这是可选的。
+安装完成后，你可以选择在同一台服务器上安装 [WireGuard](https://github.com/hwdsl2/wireguard-install/blob/master/README-zh.md) 和/或 [OpenVPN](https://github.com/hwdsl2/openvpn-install/blob/master/README-zh.md)。
 
 <details>
 <summary>
-高级用户可以自定义 IKEv2 选项。这是可选的。
+可选：在安装 VPN 时自定义 IKEv2 选项。
 </summary>
 
-高级用户可以指定一个域名作为 IKEv2 服务器地址。这是可选的。该域名必须是一个全称域名(FQDN)。示例如下：
+在安装 VPN 时，你可以指定一个域名作为 IKEv2 服务器地址。这是可选的。该域名必须是一个全称域名(FQDN)。示例如下：
 
 ```bash
 sudo VPN_DNS_NAME='vpn.example.com' sh vpn.sh
@@ -173,11 +169,11 @@ curl -fL https://get.vpnsetup.net -o vpn.sh
 sudo sh vpn.sh
 ```
 
-或者，你也可以使用这个链接：
+或者，你也可以使用这些链接：
 
 ```bash
-curl -fL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh -o vpn.sh
-sudo sh vpn.sh
+https://github.com/hwdsl2/setup-ipsec-vpn/raw/master/vpnsetup.sh
+https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/vpnsetup.sh
 ```
 
 如果无法下载，打开 [vpnsetup.sh](vpnsetup.sh)，然后点击右边的 `Raw` 按钮。按快捷键 `Ctrl/Cmd+A` 全选，`Ctrl/Cmd+C` 复制，然后粘贴到你喜欢的编辑器。
@@ -185,21 +181,25 @@ sudo sh vpn.sh
 
 ## 下一步
 
+*其他语言版本: [English](README.md#next-steps), [中文](README-zh.md#下一步)。*
+
 配置你的计算机或其它设备使用 VPN。请参见：
 
-[**IKEv2 VPN 配置和使用指南**](docs/ikev2-howto-zh.md)
+**[配置 IKEv2 VPN 客户端（推荐）](docs/ikev2-howto-zh.md)**
 
-[**配置 IPsec/L2TP VPN 客户端**](docs/clients-zh.md)
+**[配置 IPsec/L2TP VPN 客户端](docs/clients-zh.md)**
 
-[**配置 IPsec/XAuth ("Cisco IPsec") VPN 客户端**](docs/clients-xauth-zh.md)
+**[配置 IPsec/XAuth ("Cisco IPsec") VPN 客户端](docs/clients-xauth-zh.md)**
 
-如果在连接过程中遇到错误，请参见 [故障排除](docs/clients-zh.md#故障排除)。
+**[下载 VPN 文档的 PDF 版本（支持者）](https://ko-fi.com/post/PDF-versions-of-Setup-IPsec-VPN-docs-for-easy-shar-E1E4DO69I)**
 
 开始使用自己的专属 VPN! :sparkles::tada::rocket::sparkles:
 
-## 重要提示
+> 如果你喜欢这个项目，可以表达你的支持或感谢。
+>
+> <a href="https://ko-fi.com/hwdsl2" target="_blank"><img height="36" width="187" src="docs/images/kofi2.png" border="0" alt="Buy Me a Coffee at ko-fi.com" /></a> &nbsp;<a href="https://coindrop.to/hwdsl2" target="_blank"><img src="docs/images/embed-button.png" height="36" width="145" border="0" alt="Coindrop.to me" /></a>
 
-*其他语言版本: [English](README.md#important-notes), [中文](README-zh.md#重要提示)。*
+## 重要提示
 
 **Windows 用户** 对于 IPsec/L2TP 模式，在首次连接之前需要 [修改注册表](docs/clients-zh.md#windows-错误-809)，以解决 VPN 服务器或客户端与 NAT（比如家用路由器）的兼容问题。
 
@@ -232,10 +232,11 @@ wget https://get.vpnsetup.net/upg -O vpnup.sh && sudo sh vpnup.sh
 curl -fsSL https://get.vpnsetup.net/upg -o vpnup.sh && sudo sh vpnup.sh
 ```
 
-或者，你也可以使用这个链接：
+或者，你也可以使用这些链接：
 
 ```bash
-curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/extras/vpnupgrade.sh -o vpnup.sh && sudo sh vpnup.sh
+https://github.com/hwdsl2/setup-ipsec-vpn/raw/master/extras/vpnupgrade.sh
+https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/extras/vpnupgrade.sh
 ```
 
 如果无法下载，打开 [vpnupgrade.sh](extras/vpnupgrade.sh)，然后点击右边的 `Raw` 按钮。按快捷键 `Ctrl/Cmd+A` 全选，`Ctrl/Cmd+C` 复制，然后粘贴到你喜欢的编辑器。
@@ -249,9 +250,25 @@ curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/extras/vpnupgr
 
 请参见 [管理 VPN 用户](docs/manage-users-zh.md)。
 
+- [使用辅助脚本管理 VPN 用户](docs/manage-users-zh.md#使用辅助脚本管理-vpn-用户)
+- [查看 VPN 用户](docs/manage-users-zh.md#查看-vpn-用户)
+- [查看或更改 IPsec PSK](docs/manage-users-zh.md#查看或更改-ipsec-psk)
+- [手动管理 VPN 用户](docs/manage-users-zh.md#手动管理-vpn-用户)
+
 ## 高级用法
 
 请参见 [高级用法](docs/advanced-usage-zh.md)。
+
+- [使用其他的 DNS 服务器](docs/advanced-usage-zh.md#使用其他的-dns-服务器)
+- [域名和更改服务器 IP](docs/advanced-usage-zh.md#域名和更改服务器-ip)
+- [仅限 IKEv2 的 VPN](docs/advanced-usage-zh.md#仅限-ikev2-的-vpn)
+- [VPN 内网 IP 和流量](docs/advanced-usage-zh.md#vpn-内网-ip-和流量)
+- [自定义 VPN 子网](docs/advanced-usage-zh.md#自定义-vpn-子网)
+- [转发端口到 VPN 客户端](docs/advanced-usage-zh.md#转发端口到-vpn-客户端)
+- [VPN 分流](docs/advanced-usage-zh.md#vpn-分流)
+- [访问 VPN 服务器的网段](docs/advanced-usage-zh.md#访问-vpn-服务器的网段)
+- [更改 IPTables 规则](docs/advanced-usage-zh.md#更改-iptables-规则)
+- [部署 Google BBR 拥塞控制](docs/advanced-usage-zh.md#部署-google-bbr-拥塞控制)
 
 ## 卸载 VPN
 
@@ -262,6 +279,25 @@ curl -fsSL https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/extras/vpnupgr
 ```bash
 wget https://get.vpnsetup.net/unst -O vpnunst.sh && sudo bash vpnunst.sh
 ```
+
+<details>
+<summary>
+或者，你也可以使用以下命令。
+</summary>
+
+你也可以使用 `curl` 下载：
+
+```bash
+curl -fsSL https://get.vpnsetup.net/unst -o vpnunst.sh && sudo bash vpnunst.sh
+```
+
+或者，你也可以使用这些链接：
+
+```bash
+https://github.com/hwdsl2/setup-ipsec-vpn/raw/master/extras/vpnuninstall.sh
+https://gitlab.com/hwdsl2/setup-ipsec-vpn/-/raw/master/extras/vpnuninstall.sh
+```
+</details>
 
 更多信息请参见 [卸载 VPN](docs/uninstall-zh.md)。
 

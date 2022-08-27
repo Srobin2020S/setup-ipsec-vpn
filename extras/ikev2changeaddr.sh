@@ -36,56 +36,16 @@ check_root() {
 }
 
 check_os() {
-  os_type=centos
-  rh_file="/etc/redhat-release"
-  if grep -qs "Red Hat" "$rh_file"; then
-    os_type=rhel
-  fi
-  [ -f /etc/oracle-release ] && os_type=ol
-  if grep -qs "release 7" "$rh_file"; then
-    os_ver=7
-  elif grep -qs "release 8" "$rh_file"; then
-    os_ver=8
-    grep -qi stream "$rh_file" && os_ver=8s
-    grep -qi rocky "$rh_file" && os_type=rocky
-    grep -qi alma "$rh_file" && os_type=alma
-  elif grep -qs "Amazon Linux release 2" /etc/system-release; then
-    os_type=amzn
-    os_ver=2
-  else
-    os_type=$(lsb_release -si 2>/dev/null)
-    [ -z "$os_type" ] && [ -f /etc/os-release ] && os_type=$(. /etc/os-release && printf '%s' "$ID")
-    case $os_type in
-      [Uu]buntu)
-        os_type=ubuntu
-        ;;
-      [Dd]ebian)
-        os_type=debian
-        ;;
-      [Rr]aspbian)
-        os_type=raspbian
-        ;;
-      [Aa]lpine)
-        os_type=alpine
-        ;;
-      *)
-cat 1>&2 <<'EOF'
-Error: This script only supports one of the following OS:
-       Ubuntu, Debian, CentOS/RHEL, Rocky Linux, AlmaLinux,
-       Oracle Linux, Amazon Linux 2 or Alpine Linux
-EOF
-        exit 1
-        ;;
-    esac
-    if [ "$os_type" = "alpine" ]; then
-      os_ver=$(. /etc/os-release && printf '%s' "$VERSION_ID" | cut -d '.' -f 1,2)
-      if [ "$os_ver" != "3.14" ] && [ "$os_ver" != "3.15" ]; then
-        exiterr "This script only supports Alpine Linux 3.14/3.15."
-      fi
-    else
-      os_ver=$(sed 's/\..*//' /etc/debian_version | tr -dc 'A-Za-z0-9')
-    fi
-  fi
+  os_type=$(lsb_release -si 2>/dev/null)
+  [ -z "$os_type" ] && [ -f /etc/os-release ] && os_type=$(. /etc/os-release && printf '%s' "$ID")
+  case $os_type in
+    [Aa]lpine)
+      os_type=alpine
+      ;;
+    *)
+      os_type=other
+      ;;
+  esac
 }
 
 check_libreswan() {
@@ -104,7 +64,7 @@ check_ikev2() {
   if ! grep -qs "conn ikev2-cp" /etc/ipsec.d/ikev2.conf; then
 cat 1>&2 <<'EOF'
 Error: You must first set up IKEv2 before changing IKEv2 server address.
-       See: vpnsetup.net/ikev2
+       See: https://vpnsetup.net/ikev2
 EOF
     exit 1
   fi

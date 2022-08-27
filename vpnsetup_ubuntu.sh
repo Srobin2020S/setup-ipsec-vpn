@@ -27,9 +27,7 @@ YOUR_IPSEC_PSK=''
 YOUR_USERNAME=''
 YOUR_PASSWORD=''
 
-# Important notes:   vpnsetup.net/notes
-# Setup VPN clients: vpnsetup.net/clients
-# IKEv2 guide:       vpnsetup.net/ikev2
+# VPN client setup: https://vpnsetup.net/clients
 
 # =====================================================
 
@@ -81,7 +79,7 @@ check_os() {
     [Uu]buntu)
       os_type=ubuntu
       ;;
-    [Dd]ebian)
+    [Dd]ebian|[Kk]ali)
       os_type=debian
       ;;
     [Rr]aspbian)
@@ -386,7 +384,7 @@ conn shared
   rekey=no
   keyingtries=5
   dpddelay=30
-  dpdtimeout=120
+  dpdtimeout=300
   dpdaction=clear
   ikev2=never
   ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
@@ -648,9 +646,7 @@ Password: $VPN_PASSWORD
 
 Write these down. You'll need them to connect!
 
-Important notes:   vpnsetup.net/notes
-Setup VPN clients: vpnsetup.net/clients
-IKEv2 guide:       vpnsetup.net/ikev2
+VPN client setup: https://vpnsetup.net/clients
 
 ================================================
 
@@ -659,7 +655,7 @@ EOF
 cat <<'EOF'
 WARNING: /dev/ppp is missing, and IPsec/L2TP mode may not work.
          Please use IKEv2 or IPsec/XAuth mode to connect.
-         Debian 11/10 users, see vpnsetup.net/debian10
+         Debian 11/10 users, see https://vpnsetup.net/debian10
 
 EOF
   fi
@@ -681,7 +677,7 @@ cat <<'EOF'
 IKEv2 is already set up on this server.
 
 Next steps: Configure IKEv2 clients. See:
-https://vpnsetup.net/ikev2clients
+https://vpnsetup.net/clients
 
 To manage IKEv2 clients, run: sudo ikev2.sh
 

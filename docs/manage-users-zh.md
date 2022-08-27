@@ -1,6 +1,6 @@
-# 管理 VPN 用户
+[English](manage-users.md) | [中文](manage-users-zh.md)
 
-*其他语言版本: [English](manage-users.md), [中文](manage-users-zh.md)。*
+# 管理 VPN 用户
 
 在默认情况下，将只创建一个用于 VPN 登录的用户账户。如果你需要查看或管理 IPsec/L2TP 和 IPsec/XAuth ("Cisco IPsec") 模式的用户，请阅读本文档。对于 IKEv2，参见 [管理客户端证书](ikev2-howto-zh.md#管理客户端证书)。
 
@@ -10,8 +10,6 @@
 * [手动管理 VPN 用户](#手动管理-vpn-用户)
 
 ## 使用辅助脚本管理 VPN 用户
-
-*其他语言版本: [English](manage-users.md#manage-vpn-users-using-helper-scripts), [中文](manage-users-zh.md#使用辅助脚本管理-vpn-用户)。*
 
 你可以使用辅助脚本添加，删除或者更新 VPN 用户。它们将同时更新 IPsec/L2TP 和 IPsec/XAuth ("Cisco IPsec") 模式的用户。对于 IKEv2 模式，请参见 [管理客户端证书](ikev2-howto-zh.md#管理客户端证书)。
 

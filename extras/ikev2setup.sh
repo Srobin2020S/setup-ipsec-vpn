@@ -46,20 +46,26 @@ check_container() {
 }
 
 check_os() {
-  os_type=centos
-  os_arch=$(uname -m | tr -dc 'A-Za-z0-9_-')
   rh_file="/etc/redhat-release"
-  if grep -qs "Red Hat" "$rh_file"; then
-    os_type=rhel
-  fi
-  [ -f /etc/oracle-release ] && os_type=ol
-  if grep -qs "release 7" "$rh_file"; then
-    os_ver=7
-  elif grep -qs "release 8" "$rh_file"; then
-    os_ver=8
-    grep -qi stream "$rh_file" && os_ver=8s
+  if [ -f "$rh_file" ]; then
+    os_type=centos
+    if grep -q "Red Hat" "$rh_file"; then
+      os_type=rhel
+    fi
+    [ -f /etc/oracle-release ] && os_type=ol
     grep -qi rocky "$rh_file" && os_type=rocky
     grep -qi alma "$rh_file" && os_type=alma
+    if grep -q "release 7" "$rh_file"; then
+      os_ver=7
+    elif grep -q "release 8" "$rh_file"; then
+      os_ver=8
+      grep -qi stream "$rh_file" && os_ver=8s
+    elif grep -q "release 9" "$rh_file"; then
+      os_ver=9
+      grep -qi stream "$rh_file" && os_ver=9s
+    else
+      exiterr "This script only supports CentOS/RHEL 7-9."
+    fi
   elif grep -qs "Amazon Linux release 2" /etc/system-release; then
     os_type=amzn
     os_ver=2
@@ -70,7 +76,7 @@ check_os() {
       [Uu]buntu)
         os_type=ubuntu
         ;;
-      [Dd]ebian)
+      [Dd]ebian|[Kk]ali)
         os_type=debian
         ;;
       [Rr]aspbian)
@@ -90,8 +96,8 @@ EOF
     esac
     if [ "$os_type" = "alpine" ]; then
       os_ver=$(. /etc/os-release && printf '%s' "$VERSION_ID" | cut -d '.' -f 1,2)
-      if [ "$os_ver" != "3.14" ] && [ "$os_ver" != "3.15" ]; then
-        exiterr "This script only supports Alpine Linux 3.14/3.15."
+      if [ "$os_ver" != "3.15" ] && [ "$os_ver" != "3.16" ]; then
+        exiterr "This script only supports Alpine Linux 3.15/3.16."
       fi
     else
       os_ver=$(sed 's/\..*//' /etc/debian_version | tr -dc 'A-Za-z0-9')
@@ -151,7 +157,7 @@ confirm_or_abort() {
 show_header() {
 cat <<'EOF'
 
-IKEv2 Script   Copyright (c) 2020-2022 Lin Song   27 May 2022
+IKEv2 Script   Copyright (c) 2020-2022 Lin Song   10 Aug 2022
 
 EOF
 }
@@ -175,7 +181,7 @@ Options:
   -h, --help                    show this help message and exit
 
 To customize IKEv2 or client options, run this script without arguments.
-For documentation, see: vpnsetup.net/ikev2
+For documentation, see: https://vpnsetup.net/ikev2
 EOF
   exit 1
 }
@@ -208,6 +214,7 @@ check_arguments() {
   if [ "$use_defaults" = "1" ] && check_ikev2_exists; then
     echo "Error: Invalid parameter '--auto'. IKEv2 is already set up on this server." >&2
     echo "       To manage VPN clients, re-run this script without '--auto'." >&2
+    echo "       To change IKEv2 server address, see https://vpnsetup.net/ikev2" >&2
     exit 1
   fi
   if [ "$((add_client + export_client + list_clients + revoke_client + delete_client))" -gt 1 ]; then
@@ -576,6 +583,9 @@ check_mobike_support() {
   if uname -a | grep -qi qnap; then
     mobike_support=0
   fi
+  if uname -a | grep -qi synology; then
+    mobike_support=0
+  fi
   if [ "$mobike_support" = "1" ]; then
     bigecho2 "Checking for MOBIKE support... available"
   else
@@ -754,17 +764,7 @@ export_p12_file() {
   p12_file="$export_dir$client_name.p12"
   p12_file_enc="$export_dir$client_name.enc.p12"
   pk12util -W "$p12_password" -d "$CERT_DB" -n "$client_name" -o "$p12_file_enc" >/dev/null || exit 1
-  if [ "$os_type" = "alpine" ] || { [ "$os_type" = "ubuntu" ] && [ "$os_ver" = "11" ]; }; then
-    pem_file="$export_dir$client_name.temp.pem"
-    openssl pkcs12 -in "$p12_file_enc" -out "$pem_file" -passin "pass:$p12_password" -passout "pass:$p12_password" || exit 1
-    openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$pem_file" -out "$p12_file_enc" \
-      -name "$client_name" -passin "pass:$p12_password" -passout "pass:$p12_password" || exit 1
-    if [ "$use_config_password" = "0" ]; then
-      openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$pem_file" -out "$p12_file" \
-        -name "$client_name" -passin "pass:$p12_password" -passout pass: || exit 1
-    fi
-    /bin/rm -f "$pem_file"
-  elif [ "$os_type" = "ubuntu" ] && [ "$os_ver" = "bookwormsid" ]; then
+  if [ "$os_ver" = "bookwormsid" ] || openssl version 2>/dev/null | grep -q "^OpenSSL 3"; then
     ca_crt="$export_dir$client_name.ca.crt"
     client_crt="$export_dir$client_name.client.crt"
     client_key="$export_dir$client_name.client.key"
@@ -780,6 +780,16 @@ export_p12_file() {
     if [ "$use_config_password" = "0" ]; then
       openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$pem_file" -out "$p12_file" \
         -legacy -name "$client_name" -passin "pass:$p12_password" -passout pass: || exit 1
+    fi
+    /bin/rm -f "$pem_file"
+  elif [ "$os_type" = "alpine" ] || [ "$os_ver" = "kalirolling" ] || [ "$os_type$os_ver" = "ubuntu11" ]; then
+    pem_file="$export_dir$client_name.temp.pem"
+    openssl pkcs12 -in "$p12_file_enc" -out "$pem_file" -passin "pass:$p12_password" -passout "pass:$p12_password" || exit 1
+    openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$pem_file" -out "$p12_file_enc" \
+      -name "$client_name" -passin "pass:$p12_password" -passout "pass:$p12_password" || exit 1
+    if [ "$use_config_password" = "0" ]; then
+      openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -export -in "$pem_file" -out "$p12_file" \
+        -name "$client_name" -passin "pass:$p12_password" -passout pass: || exit 1
     fi
     /bin/rm -f "$pem_file"
   elif [ "$use_config_password" = "0" ]; then
@@ -1076,7 +1086,7 @@ create_config_readme() {
     && [ "$use_defaults" = "1" ] && [ ! -t 1 ] && [ ! -f "$readme_file" ]; then
 cat > "$readme_file" <<'EOF'
 These IKEv2 client config files were created during IPsec VPN setup.
-To configure IKEv2 clients, see: https://vpnsetup.net/ikev2clients
+To configure IKEv2 clients, see: https://vpnsetup.net/clients
 EOF
     if [ "$export_to_home_dir" = "1" ]; then
       chown "$SUDO_USER:$SUDO_USER" "$readme_file"
@@ -1107,7 +1117,7 @@ conn ikev2-cp
   rightrsasigkey=%cert
   narrowing=yes
   dpddelay=30
-  dpdtimeout=120
+  retransmit-timeout=300s
   dpdaction=clear
   auto=add
   ikev2=insist
@@ -1145,12 +1155,13 @@ EOF
 }
 
 apply_ubuntu1804_nss_fix() {
+  os_arch=$(uname -m | tr -dc 'A-Za-z0-9_-')
   if [ "$os_type" = "ubuntu" ] && [ "$os_ver" = "bustersid" ] && [ "$os_arch" = "x86_64" ]; then
     nss_url1="https://mirrors.kernel.org/ubuntu/pool/main/n/nss"
     nss_url2="https://mirrors.kernel.org/ubuntu/pool/universe/n/nss"
-    nss_deb1="libnss3_3.49.1-1ubuntu1.7_amd64.deb"
-    nss_deb2="libnss3-dev_3.49.1-1ubuntu1.7_amd64.deb"
-    nss_deb3="libnss3-tools_3.49.1-1ubuntu1.7_amd64.deb"
+    nss_deb1="libnss3_3.49.1-1ubuntu1.8_amd64.deb"
+    nss_deb2="libnss3-dev_3.49.1-1ubuntu1.8_amd64.deb"
+    nss_deb3="libnss3-tools_3.49.1-1ubuntu1.8_amd64.deb"
     if tmpdir=$(mktemp --tmpdir -d vpn.XXXXX 2>/dev/null); then
       bigecho2 "Applying fix for NSS bug on Ubuntu 18.04..."
       export DEBIAN_FRONTEND=noninteractive
@@ -1271,7 +1282,7 @@ EOF
 cat <<'EOF'
 
 Next steps: Configure IKEv2 clients. See:
-https://vpnsetup.net/ikev2clients
+https://vpnsetup.net/clients
 
 ================================================
 
@@ -1299,7 +1310,7 @@ check_ipsec_conf() {
 cat 1>&2 <<EOF
 Error: IKEv2 configuration section found in $IPSEC_CONF.
        This script cannot automatically remove IKEv2 from this server.
-       To manually remove IKEv2, see vpnsetup.net/ikev2
+       To manually remove IKEv2, see https://vpnsetup.net/ikev2
 EOF
     abort_and_exit
   fi

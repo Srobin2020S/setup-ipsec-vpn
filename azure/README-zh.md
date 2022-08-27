@@ -1,6 +1,6 @@
-# 在 Microsoft Azure 上部署
+[English](README.md) | [中文](README-zh.md)
 
-*其他语言版本: [English](README.md), [中文](README-zh.md)。*
+# 在 Microsoft Azure 上部署
 
 使用这个模板，你可以在 Microsoft Azure Cloud 上快速搭建一个 VPN 服务器 （[定价细节](https://azure.microsoft.com/zh-cn/pricing/details/virtual-machines/)）。
 
@@ -9,7 +9,7 @@
  - Username for VPN **and** SSH （用户名）
  - Password for VPN **and** SSH （密码）
  - IPsec Pre-Shared Key for VPN （IPsec 预共享密钥）
- - Operating System Image （操作系统镜像，Ubuntu 22.04/20.04/18.04 或 Debian 9）
+ - Operating System Image （操作系统镜像，Ubuntu 22.04, 20.04 或 18.04）
  - Virtual Machine Size （虚拟机大小，默认值： Standard_B1s）
 
 **注：** \*不要\* 在值中使用这些字符： `\ " '`

@@ -28,9 +28,7 @@ YOUR_IPSEC_PSK=''
 YOUR_USERNAME=''
 YOUR_PASSWORD=''
 
-# Important notes:   vpnsetup.net/notes
-# Setup VPN clients: vpnsetup.net/clients
-# IKEv2 guide:       vpnsetup.net/ikev2
+# VPN client setup: https://vpnsetup.net/clients
 
 # =====================================================
 
@@ -76,21 +74,28 @@ EOF
 }
 
 check_os() {
-  os_type=centos
   rh_file="/etc/redhat-release"
-  if grep -qs "Red Hat" "$rh_file"; then
-    os_type=rhel
-  fi
-  [ -f /etc/oracle-release ] && os_type=ol
-  if grep -qs "release 7" "$rh_file"; then
-    os_ver=7
-  elif grep -qs "release 8" "$rh_file"; then
-    os_ver=8
-    grep -qi stream "$rh_file" && os_ver=8s
+  if [ -f "$rh_file" ]; then
+    os_type=centos
+    if grep -q "Red Hat" "$rh_file"; then
+      os_type=rhel
+    fi
+    [ -f /etc/oracle-release ] && os_type=ol
     grep -qi rocky "$rh_file" && os_type=rocky
     grep -qi alma "$rh_file" && os_type=alma
-    if [ "$os_type" = "centos" ] && [ "$os_ver" = "8" ]; then
-      exiterr "CentOS Linux 8 is EOL and not supported."
+    if grep -q "release 7" "$rh_file"; then
+      os_ver=7
+    elif grep -q "release 8" "$rh_file"; then
+      os_ver=8
+      grep -qi stream "$rh_file" && os_ver=8s
+      if [ "$os_type$os_ver" = "centos8" ]; then
+        exiterr "CentOS Linux 8 is EOL and not supported."
+      fi
+    elif grep -q "release 9" "$rh_file"; then
+      os_ver=9
+      grep -qi stream "$rh_file" && os_ver=9s
+    else
+      exiterr "This script only supports CentOS/RHEL 7-9."
     fi
   else
 cat 1>&2 <<'EOF'
@@ -220,15 +225,15 @@ install_vpn_pkgs_1() {
   rp1="$erp=epel"
   rp2="$erp=*server-*optional*"
   rp3="$erp=*releases-optional*"
-  rp4="$erp=[Pp]ower[Tt]ools"
-  if [ "$os_type" = "ol" ] && [ "$os_ver" = "8" ]; then
-    rp1="$erp=ol8_developer_EPEL"
-    rp4="$erp=ol8_codeready_builder"
+  if [ "$os_type" = "ol" ]; then
+    if [ "$os_ver" = "9" ]; then
+      rp1="$erp=ol9_developer_EPEL"
+    elif [ "$os_ver" = "8" ]; then
+      rp1="$erp=ol8_developer_EPEL"
+    else
+      rp3="$erp=ol7_optional_latest"
+    fi
   fi
-  if [ "$os_type" = "ol" ] && [ "$os_ver" = "7" ]; then
-    rp3="$erp=ol7_optional_latest"
-  fi
-  [ "$os_type" = "rhel" ] && rp4="$erp=codeready-builder-for-rhel-8-*"
   (
     set -x
     yum -y -q install nss-devel nspr-devel pkgconfig pam-devel \
@@ -258,9 +263,10 @@ install_vpn_pkgs_3() {
   else
     (
       set -x
-      yum "$rp4" -y -q install $p1 $p2 $p3 >/dev/null
+      yum -y -q install $p1 $p2 >/dev/null
     ) || exiterr2
-    if systemctl is-active --quiet firewalld \
+    if [ "$os_ver" = "9" ] || [ "$os_ver" = "9s" ] \
+      || systemctl is-active --quiet firewalld \
       || systemctl is-active --quiet nftables \
       || grep -qs "hwdsl2 VPN script" /etc/sysconfig/nftables.conf; then
       use_nft=1
@@ -409,7 +415,7 @@ conn shared
   rekey=no
   keyingtries=5
   dpddelay=30
-  dpdtimeout=120
+  dpdtimeout=300
   dpdaction=clear
   ikev2=never
   ike=aes256-sha2,aes128-sha2,aes256-sha1,aes128-sha1,aes256-sha2;modp1024,aes128-sha1;modp1024
@@ -581,7 +587,9 @@ update_iptables() {
     $ipf 5 -i "$NET_IFACE" -d "$XAUTH_NET" -m conntrack --ctstate "$res" -j ACCEPT
     $ipf 6 -s "$XAUTH_NET" -o "$NET_IFACE" -j ACCEPT
     $ipf 7 -s "$XAUTH_NET" -o ppp+ -j ACCEPT
-    iptables -A FORWARD -j DROP
+    if [ "$use_nft" != "1" ]; then
+      iptables -A FORWARD -j DROP
+    fi
     $ipp -s "$XAUTH_NET" -o "$NET_IFACE" -m policy --dir out --pol none -j MASQUERADE
     $ipp -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE
     echo "# Modified by hwdsl2 VPN script" > "$IPT_FILE"
@@ -604,6 +612,16 @@ update_iptables() {
   fi
 }
 
+fix_nss_config() {
+  nss_conf="/etc/crypto-policies/back-ends/nss.config"
+  if [ -s "$nss_conf" ]; then
+    if ! grep -q ":SHA1:" "$nss_conf" \
+      && ! grep -q " allow=SHA1:" "$nss_conf"; then
+      sed -i "/ALL allow=/s/ allow=/ allow=SHA1:/" "$nss_conf"
+    fi
+  fi
+}
+
 apply_gcp_mtu_fix() {
   if dmidecode -s system-product-name 2>/dev/null | grep -qi 'Google Compute Engine' \
     && ifconfig 2>/dev/null | grep "$NET_IFACE" | head -n 1 | grep -qi 'mtu 1460'; then
@@ -622,7 +640,9 @@ apply_gcp_mtu_fix() {
 enable_on_boot() {
   bigecho "Enabling services on boot..."
   systemctl --now mask firewalld 2>/dev/null
-  if [ "$use_nft" = "1" ]; then
+  if [ "$os_type$os_ver" = "ol9" ]; then
+    systemctl enable nftables 2>/dev/null
+  elif [ "$use_nft" = "1" ]; then
     systemctl enable nftables fail2ban 2>/dev/null
   else
     systemctl enable iptables fail2ban 2>/dev/null
@@ -684,9 +704,7 @@ Password: $VPN_PASSWORD
 
 Write these down. You'll need them to connect!
 
-Important notes:   vpnsetup.net/notes
-Setup VPN clients: vpnsetup.net/clients
-IKEv2 guide:       vpnsetup.net/ikev2
+VPN client setup: https://vpnsetup.net/clients
 
 ================================================
 
@@ -709,7 +727,7 @@ cat <<'EOF'
 IKEv2 is already set up on this server.
 
 Next steps: Configure IKEv2 clients. See:
-https://vpnsetup.net/ikev2clients
+https://vpnsetup.net/clients
 
 To manage IKEv2 clients, run: sudo ikev2.sh
 
@@ -738,14 +756,19 @@ vpnsetup() {
   install_vpn_pkgs_1
   install_vpn_pkgs_2
   install_vpn_pkgs_3
-  install_fail2ban
+  if [ "$os_type$os_ver" != "ol9" ]; then
+    install_fail2ban
+  fi
   get_helper_scripts
   get_libreswan
   install_libreswan
   create_vpn_config
-  create_f2b_config
+  if [ "$os_type$os_ver" != "ol9" ]; then
+    create_f2b_config
+  fi
   update_sysctl
   update_iptables
+  fix_nss_config
   apply_gcp_mtu_fix
   enable_on_boot
   start_services
